@@ -70,6 +70,14 @@ class Announcer
     end
   end
 
+  def unsubscribe_from(*args)
+    context = args.pop
+
+    args.each do |each|
+      @subscribers[each.to_announcement.class].delete(context)
+    end
+  end
+
   def announce(announcement)
     unless announcement.respond_to? :to_announcement
       raise TypeError, "#{announcement.inspect} must respond to \#to_announcement"

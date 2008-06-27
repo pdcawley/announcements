@@ -54,7 +54,6 @@ describe Announcer do
     announcer.announce Announcement
   end
 
-
   describe 'subscribing with a callable object' do
     it "should accept a lambda" do
       target.should_receive(:got_announcement).with(duck_type(:Announcement))
@@ -187,6 +186,35 @@ describe Announcer do
       announcer.unsubscribe @obj
       announcer.announce Announcement
       @obj.method_calls.should be_empty
+    end
+  end
+
+  describe "With subscriptions to AnnouncementMockA and AnnouncementMockB and announcing both" do
+    before :each do
+      announcer.subscribe(AnnouncementMockA) {target.got_mock_a}
+      announcer.subscribe(AnnouncementMockB) {target.got_mock_b}
+    end
+
+    after :each do
+      announcer.announce(AnnouncementMockA)
+      announcer.announce(AnnouncementMockB)
+    end
+
+    it "should fire both subscriptions" do
+      target.should_receive(:got_mock_a)
+      target.should_receive(:got_mock_b)
+    end
+
+    it "#unsubscribe_from(AnnouncementMockA, self) should remove the AnnouncementMockA handler" do
+      target.should_receive(:got_mock_a).exactly(0).times
+      target.should_receive(:got_mock_b)
+      announcer.unsubscribe_from(AnnouncementMockA, self)
+    end
+
+    it "#unsubscribe_from(AnnouncementMockA, AnnouncementMockB) should remove both handlers" do
+      target.should_receive(:got_mock_a).exactly(0).times
+      target.should_receive(:got_mock_b).exactly(0).times
+      announcer.unsubscribe_from(AnnouncementMockA, AnnouncementMockB, self)
     end
   end
 end
