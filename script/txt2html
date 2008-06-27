@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-GEM_NAME = 'ruby_announcements' # what ppl will type to install your gem
-RUBYFORGE_PROJECT = 'ruby_announcements'
+GEM_NAME = 'announcements' # what ppl will type to install your gem
+RUBYFORGE_PROJECT = 'announcements'
 
 require 'rubygems'
 begin

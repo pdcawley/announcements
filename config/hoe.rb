@@ -1,10 +1,10 @@
 require 'ruby_announcements/version'
 
-AUTHOR = 'FIXME full name'  # can also be an array of Authors
-EMAIL = "FIXME email"
+AUTHOR = 'Piers Cawley'  # can also be an array of Authors
+EMAIL = "pdcawley@bofh.org.uk"
 DESCRIPTION = "description of gem"
-GEM_NAME = 'ruby_announcements' # what ppl will type to install your gem
-RUBYFORGE_PROJECT = 'ruby_announcements' # The unix name for your project
+GEM_NAME = 'announcements' # what ppl will type to install your gem
+RUBYFORGE_PROJECT = 'announcements' # The unix name for your project
 HOMEPATH = "http://#{RUBYFORGE_PROJECT}.rubyforge.org"
 DOWNLOAD_PATH = "http://rubyforge.org/projects/#{RUBYFORGE_PROJECT}"
 EXTRA_DEPENDENCIES = [
@@ -35,7 +35,7 @@ REV = nil
 # UNCOMMENT IF REQUIRED:
 # REV = YAML.load(`svn info`)['Revision']
 VERS = RubyAnnouncements::VERSION::STRING + (REV ? ".#{REV}" : "")
-RDOC_OPTS = ['--quiet', '--title', 'ruby_announcements documentation',
+RDOC_OPTS = ['--quiet', '--title', 'announcements documentation',
     "--opname", "index.html",
     "--line-numbers",
     "--main", "README",

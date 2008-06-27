@@ -1,8 +1,11 @@
 require File.dirname(__FILE__) + '/spec_helper.rb'
 
+Announcement = Announcements::Announcement
+Announcer = Announcements::Announcer
+
 describe Announcements::Subscription::Base do
   it "should exist" do
-    Announcements::Subscription::Base.should be_instance_of Class
+    Announcements::Subscription::Base.should be_instance_of(Class)
   end
 end
 
