@@ -1,4 +1,4 @@
-require 'ruby_announcements/version'
+require 'announcements/version'
 
 AUTHOR = 'Piers Cawley'  # can also be an array of Authors
 EMAIL = "pdcawley@bofh.org.uk"
@@ -34,7 +34,7 @@ end
 REV = nil
 # UNCOMMENT IF REQUIRED:
 # REV = YAML.load(`svn info`)['Revision']
-VERS = RubyAnnouncements::VERSION::STRING + (REV ? ".#{REV}" : "")
+VERS = Announcements::VERSION::STRING + (REV ? ".#{REV}" : "")
 RDOC_OPTS = ['--quiet', '--title', 'announcements documentation',
     "--opname", "index.html",
     "--line-numbers",
