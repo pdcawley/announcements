@@ -224,4 +224,21 @@ describe Announcer do
       announcer.unsubscribe_from(AnnouncementMockA, AnnouncementMockB, self)
     end
   end
+
+  describe "#announce" do
+    it "should call #to_announcement on the announcement object" do
+      a = mock(:announcer)
+      a.should_receive(:to_announcement).and_return(a)
+
+      announcer.announce(a)
+    end
+
+    it "should return the announcement object" do
+      a = mock(:announcer, :null_object => true)
+      a.stub!(:to_announcement).and_return(a)
+
+      announcer.announce(a).should be(a)
+    end
+
+  end
 end

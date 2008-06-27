@@ -6,4 +6,12 @@ class Announcement
   def to_announcement
     self
   end
+
+  def veto
+    @vetoed = true
+  end
+
+  def vetoed?
+    @vetoed
+  end
 end

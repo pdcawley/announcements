@@ -97,6 +97,7 @@ class Announcer
         v.call(announcement, self)
       end
     end
+    return announcement
   end
 
   private
