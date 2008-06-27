@@ -1,14 +1,17 @@
-= ruby_announcements
+= announcements
 
 * FIX (url)
 
 == DESCRIPTION:
 
-FIX (describe your package)
+A port of Vassily Bykov's Smalltalk Announcements framework. Think of it as
+Observer/Observable on steroids.
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+Currently we're at the very, very rough end of the functionality. Basic
+subscribe/unsubscribe functionality is there, but the code's still a wee bit
+structural. Expect reification later.
 
 == SYNOPSIS:
 
@@ -16,25 +19,20 @@ FIX (describe your package)
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+* Rspec, but only if you want to run the tests
+* Er...
+* That's it
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+  sudo gem install announcements
 
-== LICENSE:
+== COPYRIGHT:
 
-(The MIT License)
+Copyright (c) 2008 Piers Cawley
 
-Copyright (c) 2008 FIXME full name
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+This library is free software; you can redistribute it and/or modify it under
+the saem terms as Ruby itself.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
