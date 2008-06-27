@@ -29,6 +29,17 @@ describe Announcer do
     @target ||= mock(:target)
   end
 
+  it "should allow subscription with a hash" do
+    subscriber1 = mock(:subscriber1)
+    subscriber2 = mock(:subscriber2)
+    subscriber1.should_receive(:methodA).with(Announcement)
+    subscriber2.should_receive(:methodB).with(Announcement)
+    subscriber2.should_receive(:methodA).with(Announcement)
+
+    announcer.subscribe(Announcement, subscriber1 => :methodA, subscriber2 => [:methodA, :methodB])
+    announcer.announce Announcement
+  end
+
 
   describe 'subscribing with a callable object' do
     it "should accept a lambda" do
@@ -152,15 +163,24 @@ describe Announcer do
     end
   end
 
-#   describe "when subscribing with 'subscribe Announcement, an_object => :method" do
-#     before :each do
-#       @obj = mock(:subscriber)
-#       @obj.stub!(:method)
-#       announcer.subscribe Announcement, @obj => :method
-#     end
+  describe "when subscribing with 'subscribe Announcement, an_object => :method and announcing Announcement" do
+    before :each do
+      @obj = mock(:subscriber)
+      @obj.stub!(:method)
+      announcer.subscribe Announcement, @obj => :method
+    end
+
+    after :each do
+      announcer.announce Announcement
+    end
     
-#     it "#announce should send(:method, Announcement) to an_object" do
-#       @obj.should_receive(:method).with(Announcement)
-#     end
-#   end
+    it "#announce should send(:method, Announcement) to an_object" do
+      @obj.should_receive(:method).with(Announcement)
+    end
+
+    it "#unsubscribe an_object should do the obvious thing" do
+      @obj.should_receive(:method).exactly(0).times
+      announcer.unsubscribe @obj
+    end
+  end
 end

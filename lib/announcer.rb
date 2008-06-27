@@ -7,8 +7,14 @@ class Announcer
     end
 
     def << action
-      action?(action) or raise TypeError, "#{callable.inspect} must be callable or respond to to_proc"
-      @seq << action
+      if action.is_a? Array
+        action.each do |each|
+          self << each
+        end
+      else
+        action?(action) or raise TypeError, "#{callable.inspect} must be callable or respond to to_proc"
+        @seq << action
+      end
     end
 
     def call(*args)
@@ -46,8 +52,7 @@ class Announcer
       raise TypeError, "#{announcement_class.inspect} must be an Announcement"
     end
 
-
-    @subscribers[announcement_class] << (callable || proc {|ann| yield ann})
+    @subscribers[announcement_class] << make_actions(callable || proc {|ann| yield ann})
   end
 
   def unsubscribe(context)
@@ -66,5 +71,24 @@ class Announcer
         v.call(announcement)
       end
     end
+  end
+
+  private
+
+  def make_actions(thing)
+    case thing
+    when Hash
+      thing.collect {|(k,v)|
+        method_sender(k,v)
+      }
+    else
+      thing
+    end
+  end
+
+  def method_sender(target, method)
+    target.instance_eval {
+      lambda {|announcement| [*method].each {|each| self.send(each, announcement)}}
+    }
   end
 end
