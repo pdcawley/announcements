@@ -71,12 +71,13 @@ class Announcer
   end
 
   def announce(announcement)
-    target_key = announcement.is_a?(Class) ? announcement : announcement.class
-    unless target_key <= Announcement
-      raise TypeError, "#{target_key.inspect} is not a kind of Announcement"
+    unless announcement.respond_to? :to_announcement
+      raise TypeError, "#{announcement.inspect} must respond to \#to_announcement"
     end
+    announcement = announcement.to_announcement
+
     subscribers.each do |(k,v)|
-      if target_key <= k
+      if announcement.is_a?(k)
         v.call(announcement, self)
       end
     end

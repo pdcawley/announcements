@@ -5,15 +5,29 @@ require 'announcement'
 # Time to add your specs!
 # http://rspec.info/
 class AnnouncementMockA < Announcement
+  def AnnouncementMockA
+  end
 end
 
 class AnnouncementMockB < Announcement
+  def AnnouncementMockB
+  end
 end
 
 class AnnouncementMockC < Announcement
+  def AnnouncementMockC
+  end
 end
 
 class AnnouncementMockD < Announcement
+  def AnnouncementMockD
+  end
+end
+
+class Announcement
+  def Announcement
+    # stub method for duck typing...
+  end
 end
 
 describe Announcer do
@@ -32,9 +46,9 @@ describe Announcer do
   it "should allow subscription with a hash" do
     subscriber1 = mock(:subscriber1)
     subscriber2 = mock(:subscriber2)
-    subscriber1.should_receive(:methodA).with(Announcement, announcer)
-    subscriber2.should_receive(:methodB).with(Announcement, announcer)
-    subscriber2.should_receive(:methodA).with(Announcement, announcer)
+    subscriber1.should_receive(:methodA).with(duck_type(:Announcement), announcer)
+    subscriber2.should_receive(:methodB).with(duck_type(:Announcement), announcer)
+    subscriber2.should_receive(:methodA).with(duck_type(:Announcement), announcer)
 
     announcer.subscribe(Announcement, subscriber1 => :methodA, subscriber2 => [:methodA, :methodB])
     announcer.announce Announcement
@@ -43,14 +57,14 @@ describe Announcer do
 
   describe 'subscribing with a callable object' do
     it "should accept a lambda" do
-      target.should_receive(:got_announcement).with(Announcement)
+      target.should_receive(:got_announcement).with(duck_type(:Announcement))
       announcer.subscribe Announcement, lambda {|a| target.got_announcement(a) }
       announcer.announce Announcement
     end
 
     it "should accept an object that responds to call" do
       callable = mock(:callable)
-      callable.should_receive(:call).with(Announcement, announcer)
+      callable.should_receive(:call).with(duck_type(:Announcement), announcer)
       announcer.subscribe Announcement, callable
       announcer.announce Announcement
     end
@@ -82,8 +96,7 @@ describe Announcer do
     announcer.announce AnnouncementMockA
     announcer.announce AnnouncementMockB
 
-    seen.should == [AnnouncementMockA, AnnouncementMockB]
-    
+    seen.collect {|each| each.class}.should == [AnnouncementMockA, AnnouncementMockB]
   end
 
   describe "with a subscription to AnnouncementMockA" do
@@ -100,7 +113,7 @@ describe Announcer do
     end
     
     it "#announce AnnouncementMockA should call the block" do
-      target.should_receive(:got_announcement).with(AnnouncementMockA, announcer)
+      target.should_receive(:got_announcement).with(duck_type(:AnnouncementMockA), announcer)
       
       announcer.announce AnnouncementMockA
     end
@@ -163,9 +176,11 @@ describe Announcer do
       announcer.subscribe Announcement, @obj => :handler
     end
 
-    it "#announce should send(:method, Announcement) to an_object" do
+    it "#announce should send(:method, an_announcement) to an_object" do
       announcer.announce Announcement
-      @obj.method_calls.should == [[:handler, Announcement]]
+      @obj.method_calls.should have(1).item
+      @obj.method_calls.first[0].should == :handler
+      @obj.method_calls.first[1].should be_instance_of(Announcement)
     end
 
     it "#unsubscribe an_object should do the obvious thing" do
