@@ -32,9 +32,9 @@ describe Announcer do
   it "should allow subscription with a hash" do
     subscriber1 = mock(:subscriber1)
     subscriber2 = mock(:subscriber2)
-    subscriber1.should_receive(:methodA).with(Announcement)
-    subscriber2.should_receive(:methodB).with(Announcement)
-    subscriber2.should_receive(:methodA).with(Announcement)
+    subscriber1.should_receive(:methodA).with(Announcement, announcer)
+    subscriber2.should_receive(:methodB).with(Announcement, announcer)
+    subscriber2.should_receive(:methodA).with(Announcement, announcer)
 
     announcer.subscribe(Announcement, subscriber1 => :methodA, subscriber2 => [:methodA, :methodB])
     announcer.announce Announcement
@@ -50,25 +50,9 @@ describe Announcer do
 
     it "should accept an object that responds to call" do
       callable = mock(:callable)
-      callable.should_receive(:call).with(Announcement)
+      callable.should_receive(:call).with(Announcement, announcer)
       announcer.subscribe Announcement, callable
       announcer.announce Announcement
-    end
-
-    it "should accept an object that responds to to_proc" do
-      # Need to pull the target into scope for the class definition
-      the_target = target
-      the_target.should_receive(:got_announcement).with(Announcement)
-      
-      k = Class.new do |klass|
-        @@target = the_target
-        def to_proc
-          lambda {|a| @@target.got_announcement a}
-        end
-      end
-
-      announcer.subscribe Announcement, k.new
-      announcer.announce(Announcement)
     end
   end
 
@@ -104,8 +88,8 @@ describe Announcer do
 
   describe "with a subscription to AnnouncementMockA" do
     before :each do
-      announcer.subscribe AnnouncementMockA do |the_announcement|
-        target.got_announcement(the_announcement)
+      announcer.subscribe AnnouncementMockA do |the_announcement, the_announcer|
+        target.got_announcement(the_announcement, the_announcer)
       end
     end
 
@@ -116,7 +100,7 @@ describe Announcer do
     end
     
     it "#announce AnnouncementMockA should call the block" do
-      target.should_receive(:got_announcement).with(AnnouncementMockA)
+      target.should_receive(:got_announcement).with(AnnouncementMockA, announcer)
       
       announcer.announce AnnouncementMockA
     end
@@ -124,7 +108,7 @@ describe Announcer do
     it "#announce AnnouncementMockA.new should call the block" do
       ann = AnnouncementMockA.new
       
-      target.should_receive(:got_announcement).with(ann)
+      target.should_receive(:got_announcement).with(ann, announcer)
 
       announcer.announce(ann)
     end
@@ -165,22 +149,29 @@ describe Announcer do
 
   describe "when subscribing with 'subscribe Announcement, an_object => :method and announcing Announcement" do
     before :each do
-      @obj = mock(:subscriber)
-      @obj.stub!(:method)
-      announcer.subscribe Announcement, @obj => :method
+      @obj = Class.new do |kls|
+        @@method_calls = []
+
+        def handler(announcement)
+          @@method_calls << [:handler, announcement]
+        end
+
+        def method_calls
+          @@method_calls
+        end
+      end.new
+      announcer.subscribe Announcement, @obj => :handler
     end
 
-    after :each do
-      announcer.announce Announcement
-    end
-    
     it "#announce should send(:method, Announcement) to an_object" do
-      @obj.should_receive(:method).with(Announcement)
+      announcer.announce Announcement
+      @obj.method_calls.should == [[:handler, Announcement]]
     end
 
     it "#unsubscribe an_object should do the obvious thing" do
-      @obj.should_receive(:method).exactly(0).times
       announcer.unsubscribe @obj
+      announcer.announce Announcement
+      @obj.method_calls.should be_empty
     end
   end
 end

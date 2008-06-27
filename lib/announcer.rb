@@ -17,8 +17,17 @@ class Announcer
       end
     end
 
-    def call(*args)
-      @seq.each {|each| each.respond_to?(:call) ? each.call(*args) : each.to_proc.call(*args) }
+    def call(announcement, announcer)
+      @seq.each do |each|
+        case each.arity
+        when 0
+          each.call
+        when 1
+          each.call(announcement)
+        else
+          each.call(announcement, announcer)
+        end
+      end
     end
 
     def delete(context)
@@ -30,7 +39,7 @@ class Announcer
     private
 
     def action? callable
-      callable.respond_to?(:call) || callable.respond_to?(:to_proc)
+      callable.respond_to?(:call) && callable.respond_to?(:arity)
     end
 
     def action_context(action)
@@ -47,12 +56,12 @@ class Announcer
     @subscribers = Hash.new {|h,k| h[k] = ActionSequence.new}
   end
 
-  def subscribe(announcement_class, callable = nil)
+  def subscribe(announcement_class, callable = nil, &block)
     unless announcement_class.is_a?(Class) && announcement_class <= Announcement
       raise TypeError, "#{announcement_class.inspect} must be an Announcement"
     end
 
-    @subscribers[announcement_class] << make_actions(callable || proc {|ann| yield ann})
+    @subscribers[announcement_class] << make_actions(callable || block)
   end
 
   def unsubscribe(context)
@@ -68,7 +77,7 @@ class Announcer
     end
     subscribers.each do |(k,v)|
       if target_key <= k
-        v.call(announcement)
+        v.call(announcement, self)
       end
     end
   end
@@ -76,19 +85,40 @@ class Announcer
   private
 
   def make_actions(thing)
-    case thing
-    when Hash
+    if thing.is_a? Hash
       thing.collect {|(k,v)|
-        method_sender(k,v)
+        method_sender(k,*v)
       }
-    else
+    elsif thing.respond_to? :arity
       thing
+    elsif thing.respond_to? :call
+      method_sender(thing, :call)
+    else
+      raise TypeError, "Don't know how to turn #{thing} into an action"
     end
   end
+  
 
-  def method_sender(target, method)
+  def method_sender(target, *method_names)
+    arities = {}
+    method_names.each do |each|
+      arities[each] = target.method(each).arity
+    end
+
     target.instance_eval {
-      lambda {|announcement| [*method].each {|each| self.send(each, announcement)}}
+      lambda {|announcement, announcer|
+        method_names.each do |each|
+          m = target.method(each)
+          case m.arity
+          when 0
+            m.call()
+          when 1
+            m.call(announcement)
+          else
+            m.call(announcement, announcer)
+          end
+        end
+      }
     }
   end
 end
