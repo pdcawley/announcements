@@ -3,6 +3,7 @@ $:.unshift(File.dirname(__FILE__)) unless
 
 require 'announcer'
 require 'announcement'
+require 'announcements'
 
 module RubyAnnouncements
   
