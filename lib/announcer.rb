@@ -56,12 +56,20 @@ class Announcer
     @subscribers = Hash.new {|h,k| h[k] = ActionSequence.new}
   end
 
-  def subscribe(announcement_class, callable = nil, &block)
-    unless announcement_class.is_a?(Class) && announcement_class <= Announcement
-      raise TypeError, "#{announcement_class.inspect} must be an Announcement"
+  def subscribe(*args, &block)
+    unless block_given?
+      callable = args.pop
     end
 
-    @subscribers[announcement_class] << make_actions(callable || block)
+    args.each do |each|
+      unless each.is_a?(Class) && each <= Announcement 
+        raise TypeError, "#{each.inspect} must be an Announcement"
+      end
+    end
+    
+    args.each do |each|
+      @subscribers[each] << make_actions(callable || block)
+    end
   end
 
   def unsubscribe(context)
@@ -77,7 +85,7 @@ class Announcer
       @subscribers[each.to_announcement.class].delete(context)
     end
   end
-
+  
   def announce(announcement)
     unless announcement.respond_to? :to_announcement
       raise TypeError, "#{announcement.inspect} must respond to \#to_announcement"

@@ -54,6 +54,13 @@ describe Announcer do
     announcer.announce Announcement
   end
 
+  it "should allow subscription to multiple announcements" do
+    target.should_receive(:got).exactly(2).times
+    announcer.subscribe(AnnouncementMockA, AnnouncementMockB) {|a| target.got(:a)}
+    announcer.announce AnnouncementMockA
+    announcer.announce AnnouncementMockB
+  end
+
   describe 'subscribing with a callable object' do
     it "should accept a lambda" do
       target.should_receive(:got_announcement).with(duck_type(:Announcement))
@@ -77,11 +84,11 @@ describe Announcer do
     end
 
     it "should only accept an announcement class as an argument" do
-      lambda { announcer.subscribe(Object) {} }.should raise_error( TypeError )
+      lambda { announcer.subscribe(Object) {|| true} }.should raise_error( TypeError )
     end
 
     it "should not accept an announcement instance" do
-      lambda { announcer.subscribe(AnnouncementMockA.new) {} }.should raise_error( TypeError )
+      lambda { announcer.subscribe(AnnouncementMockA.new) {|| true} }.should raise_error( TypeError )
     end
   end
 
