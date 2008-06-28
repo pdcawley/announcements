@@ -57,5 +57,19 @@ module Announcements
     def initialize(array = [])
       @array = array
     end
+
+    def to_a
+      @array
+    end
+
+    alias_method :to_ary, :to_a
+
+    def +(other_collection)
+      self.class.new(@array + other_collection)
+    end
+
+    def << subscription
+      @array << subscription
+    end
   end
 end

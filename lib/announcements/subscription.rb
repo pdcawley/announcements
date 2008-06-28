@@ -17,6 +17,11 @@ module Announcements
       self.subscriber = subscriber
     end
 
+    def receiver_selector(receiver, selector)
+      self.subscriber = receiver
+      self.destination = DeliveryDestination.receiver_selector(receiver, selector)
+    end
+
     def matches_announcement?(announcement)
       announcement.is_a? announcement_class
     end
@@ -47,6 +52,10 @@ module Announcements
 
     def deactivate
       self.destination = DeliveryDestination.bitbucket
+    end
+
+    def initialize(announcement_class = nil)
+      @announcement_class = announcement_class
     end
   end
 end

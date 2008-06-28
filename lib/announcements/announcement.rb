@@ -8,6 +8,29 @@ module Announcements
       self
     end
 
+    def self.to_announcement_classes
+      [self]
+    end
+
+    def self.<<(an_announcement_class)
+      AnnouncementSet.new([self, an_announcement_class])
+    end
+    
+    @@subclasses = {}
+    
+    def self.inherited(child)
+      (@@subclasses[self] ||= []) << child
+      super
+    end
+
+    def self.subclasses
+      @@subclasses[self] || []
+    end
+
+    def self.with_subclasses
+      AnnouncementSet.new([self]) + subclasses
+    end
+
     def to_announcement
       self
     end
