@@ -68,6 +68,10 @@ module Announcements
       self.class.new(@array + other_collection)
     end
 
+    def add_all(other_collection)
+      @array += other_collection.to_ary
+    end
+
     def << subscription
       @array << subscription
     end

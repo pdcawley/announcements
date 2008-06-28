@@ -57,5 +57,9 @@ module Announcements
     def initialize(announcement_class = nil)
       @announcement_class = announcement_class
     end
+
+    def <<(subscription)
+      SubscriptionCollection.new([self, subscription])
+    end
   end
 end

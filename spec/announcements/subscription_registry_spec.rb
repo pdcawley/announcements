@@ -32,12 +32,12 @@ describe Announcements::SubscriptionRegistry do
       end
     end
 
-    describe '#+ subscriptions' do
+    describe '#add_subscriptions subscriptions' do
       it "should succeed" do
         subs = Subscription.new(AnnouncementMockA) << Subscription.new(AnnouncementMockB)
-
+        registry = SubscriptionRegistry.new
         proc do
-          @registry + subs
+          registry.add_subscriptions subs
         end.should_not raise_error
       end
 
