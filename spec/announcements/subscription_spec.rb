@@ -1,96 +1,118 @@
 require File.dirname(__FILE__) + '/../spec_helper.rb'
 
-describe Announcements::Subscription::Base do
-  it "should exist" do
-    Announcements::Subscription::Base.should be_instance_of(Class)
-  end
+describe Announcements::Subscription do
+  Subscription = Announcements::Subscription
 
-  describe "Announcements::Subscription::Base.new(AnnouncementMockA)" do
-    before :each do
-      @sub = Announcements::Subscription::Base.new(AnnouncementMockA)
-    end
-    
-    it ".send(:make_announcement, :announcement, :announcer) should raise SubclassResponsibility" do
-      lambda { @sub.send :make_announcement, :announcement, :announcer } \
-        .should raise_error(SubclassResponsibility)
-    end
-
-    it "announce(AnnouncementMockA.new, :announcer should call :make_announcement" do
-      announcement = AnnouncementMockA.new
-      @sub.should_receive(:make_announcement).with(announcement, :announcer)
-      @sub.announce(announcement, :announcer)
-    end
-
-    it "announce(Announcement.new, :announcer) should not call :make_announcement" do
-      @sub.should_receive(:make_announcement).exactly(0).times
-      @sub.announce(Announcement.new, :announcer)
-    end
+  it ".for_registry(registry) should make a subscription" do
+    proc do
+      Subscription.for_registry(mock(:registry, :null_object => true)).should be_instance_of Subscription
+    end.should_not raise_error
   end
 end
 
-describe Announcements::Subscription do
-  it "should be a factory function" do
-    Announcements::Subscription(Announcement) {true}.should \
-      be_instance_of(Announcements::Subscription::BlockHandler)
-    Announcements::Subscription(Announcement, :object => :method_name).should \
-      be_instance_of(Announcements::Subscription::MessageSender)
+describe "an instance of Announcements::Subscription" do
+  Subscription = Announcements::Subscription
+
+  before :each do
+    @registry = mock(:registry, :null_object => true)
+    @subscription = Subscription.for_registry(@registry)
+    @subscription.announcement_class = AnnouncementMockA
+  end
+
+  describe "#block" do
+    it "should make a DeliveryDestination using block and set :destination to it" do
+      Announcements::DeliveryDestination.should_receive(:block).and_return(:destination)
+      @subscription.block {true}
+      @subscription.destination.should == :destination
+    end
+
+    it "should set the subscriber to the block's 'self'" do
+      @subscription.block {true}
+      @subscription.subscriber.should == self
+    end
+  end
+
+  describe "#block_subscriber(block, subscriber)" do
+    it "should make a DeliveryDestination using the block and set :destination to it" do
+      Announcements::DeliveryDestination.should_receive(:block).with(:block).and_return(:destination)
+      @subscription.block_subscriber(:block, :subscriber)
+      @subscription.destination.should == :destination
+    end
+
+    it "should set the subscriber" do
+      @subscription.block_subscriber(lambda {true}, :subscriber)
+      @subscription.subscriber.should == :subscriber
+    end
+  end
+
+  describe '#matches_announcement?, when announcement_class is AnnouncementMockA' do
+    it "should match AnnouncementMockA.new" do
+      @subscription.matches_announcement?(AnnouncementMockA.new).should be_true
+    end
+
+    it "should not match AnnouncementMockB.new" do 
+      @subscription.matches_announcement?(AnnouncementMockB.new).should_not be_true
+    end
+
+    it "should not match Announcement.new" do
+      @subscription.matches_announcement?(Announcement.new).should_not be_true
+    end
   end
   
-  it "announce should not do anything if the announcement is 'wrong'" do
-    called = false
-    sub = Announcements::Subscription(AnnouncementMockA) { called = true }
-    sub.announce(Announcement.new, :announcer)
-    called.should be_false
-  end
-end
-
-describe Announcements::Subscription::BlockHandler do
-    it "#for? Annnouncement should be true" do
-      Announcements::Subscription(Announcement) {true}.should be_for(Announcement)
-    end
-
-    it "#of? self should be true" do
-      Announcements::Subscription(Announcement) {true}.should be_of(self)
-    end
-
-    it "announce(Announcement.new) should call the block" do
-      called = false
-      Announcements::Subscription(Announcement) { called = true }.announce(Announcement.new, :announcer)
-      called.should be_true
-    end
-end
-
-describe Announcements::Subscription::MessageSender do 
+  describe '#matches_announcement?, when announcement_class is Announcement' do
     before :each do
-      @subscriber = mock(:subscriber)
-      @subscription = Announcements::Subscription(Announcement, @subscriber => :handler)
+      @subscription.announcement_class = Announcement
     end
     
-    it "should be a Subscriptions::MessageSender" do
-      @subscription.should be_instance_of(Announcements::Subscription::MessageSender)
+    it "should match AnnouncementMockA.new" do
+      @subscription.matches_announcement?(AnnouncementMockA.new).should be_true
     end
 
-    it "should be for Announcement" do
-      @subscription.should be_for(Announcement)
+    it "should match AnnouncementMockB.new" do 
+      @subscription.matches_announcement?(AnnouncementMockB.new).should be_true
     end
 
-    it "should be of @subscriber" do
-      @subscription.should be_of(@subscriber)
+    it "should match Announcement.new" do
+      @subscription.matches_announcement?(Announcement.new).should be_true
+    end
+  end
+  
+  describe '#process(announcement, announcer)' do
+    it "should send process(announcement, announcer, @subscription) to destination" do
+      @subscription.destination.should_receive(:deliver).with(:announcement, :announcer, @subscription)
+      @subscription.process(:announcement, :announcer)
+    end
+  end
+
+  describe 'destination overrides' do
+    it "adding a single override should override the base destination, delivering to the override instead" do
+      override = mock(:override)
+      override.should_receive(:deliver).with(:announcement, :announcer, @subscription)
+      @subscription.destination.should_receive(:deliver).exactly(0).times
+      
+      @subscription.add_destination_override(override).should == [override]
+      @subscription.process(:announcement, :announcer)
     end
 
-    it "should raise an error with if the hash has more than 1 key" do
-      lambda { Announcements::Subscription(Announcement, @subscriber => :handler, :foo => :bar) } \
-        .should raise_error(Exception)
+    it "removing any overrides will see the original destination reinstated" do
+      override = mock(:override)
+      override.should_receive(:deliver).exactly(0).times
+      @subscription.destination.should_receive(:deliver).with(:announcement, :announcer, @subscription)
+
+      @subscription.add_destination_override(override)
+      @subscription.remove_destination_override(override)
+      @subscription.process(:announcement, :announcer)
     end
 
-    it "should raise an error if the hash has no keys" do
-      lambda { Announcements::Subscription(Announcement, {}) } \
-        .should raise_error(Exception)
-    end
+    it "multiple destination overrides will all get deliveries" do
+      override1 = mock(:override1)
+      override1.should_receive(:deliver)
+      override2 = mock(:override2)
+      override2.should_receive(:deliver)
 
-    it "#announce(Announcement.new) should send :handler to the subscriber" do
-      announcement = Announcement.new
-      @subscriber.should_receive(:handler).with(announcement, :sender)
-      @subscription.announce(announcement, :sender)
+      @subscription.add_destination_override(override1)
+      @subscription.add_destination_override(override2)
+      @subscription.process(:announcement, :announcer)
     end
+  end
 end
