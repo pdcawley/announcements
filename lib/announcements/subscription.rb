@@ -15,6 +15,17 @@ module Announcements
       def of?(object)
         subscriber == object
       end
+
+      def announce(announcement, announcer)
+        if announcement.is_a? key
+          make_announcement(announcement, announcer)
+        end
+      end
+
+      protected
+      def make_announcement(announcement, announcer)
+        raise SubclassResponsibility
+      end
     end
 
     class BlockHandler < Base
@@ -27,7 +38,8 @@ module Announcements
         @subscriber ||= eval('self', @block)
       end
 
-      def announce(announcement, announcer)
+      protected
+      def make_announcement(announcement, announcer)
         @block.call(announcement, announcer)
       end
     end
@@ -41,7 +53,9 @@ module Announcements
         @method = method
       end
 
-      def announce(announcement, announcer)
+      protected
+
+      def make_announcement(announcement, announcer)
         subscriber.send(@method, announcement, announcer)
       end
     end
