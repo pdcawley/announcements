@@ -10,6 +10,10 @@ module Announcements
       receiver_selector(a_block, :call)
     end
 
+    def self.bitbucket
+      block proc {true}
+    end
+
     def deliver(announcement, announcer, subscription)
       method = receiver.is_a?(Proc) ? receiver : receiver.method(selector)
       case method.arity

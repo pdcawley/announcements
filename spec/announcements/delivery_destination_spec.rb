@@ -55,6 +55,17 @@ describe Announcements::DeliveryDestination do
     end
   end
 
+  describe '.bitbucket' do
+    it "should make a destination that doesn't do anything we care about." do
+      proc do
+        bucket = Announcements::DeliveryDestination.bitbucket
+        bucket.should be_instance_of(Announcements::DeliveryDestination)
+        bucket.deliver(:announcement, :announcer, :subscription)
+      end.should_not raise_error
+    end
+    
+  end
+
   describe "an instance" do
     before :each do
       @destination = Announcements::DeliveryDestination.new

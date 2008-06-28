@@ -4,6 +4,7 @@ $:.unshift(File.dirname(__FILE__)) unless
 require 'announcements/announcement'
 require 'announcements/announcer'
 require 'announcements/subscription'
+require 'announcements/subscription_collection'
 require 'announcements/delivery_destination'
 
 class SubclassResponsibility < RuntimeError

@@ -40,5 +40,13 @@ module Announcements
         destination.deliver(announcement, announcer, self)
       end
     end
+
+    def deliver(announcement, announcer)
+      destination.deliver(announcement, announcer, self)
+    end
+
+    def deactivate
+      self.destination = DeliveryDestination.bitbucket
+    end
   end
 end
