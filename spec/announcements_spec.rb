@@ -2,41 +2,14 @@ require File.dirname(__FILE__) + '/spec_helper.rb'
 
 # Time to add your specs!
 # http://rspec.info/
-class AnnouncementMockA < Announcements::Announcement
-  def AnnouncementMockA
-  end
-end
-
-class AnnouncementMockB < Announcements::Announcement
-  def AnnouncementMockB
-  end
-end
-
-class AnnouncementMockC < Announcements::Announcement
-  def AnnouncementMockC
-  end
-end
-
-class AnnouncementMockD < Announcements::Announcement
-  def AnnouncementMockD
-  end
-end
-
-class Announcements::Announcement
-  def Announcement
-    # stub method for duck typing...
-  end
-end
 
 describe Announcements::Announcer do
-  Pkg = Announcements
-  
   it "should be instantiatable" do
-    Pkg::Announcer.new.should_not be_nil
+    Announcer.new.should_not be_nil
   end
 
   def announcer
-    @announcer ||= Pkg::Announcer.new
+    @announcer ||= Announcer.new
   end
   
   def target
@@ -50,8 +23,8 @@ describe Announcements::Announcer do
     subscriber2.should_receive(:methodB).with(duck_type(:Announcement), announcer)
     subscriber2.should_receive(:methodA).with(duck_type(:Announcement), announcer)
 
-    announcer.subscribe(Pkg::Announcement, subscriber1 => :methodA, subscriber2 => [:methodA, :methodB])
-    announcer.announce Pkg::Announcement
+    announcer.subscribe(Announcement, subscriber1 => :methodA, subscriber2 => [:methodA, :methodB])
+    announcer.announce Announcement
   end
 
   it "should allow subscription to multiple announcements" do
@@ -71,8 +44,8 @@ describe Announcements::Announcer do
     it "should accept an object that responds to call" do
       callable = mock(:callable)
       callable.should_receive(:call).with(duck_type(:Announcement), announcer)
-      announcer.subscribe Pkg::Announcement, callable
-      announcer.announce Pkg::Announcement
+      announcer.subscribe Announcement, callable
+      announcer.announce Announcement
     end
   end
 
@@ -95,7 +68,7 @@ describe Announcements::Announcer do
   it "announcing a subclass should perform any actions subscribed to a superclass" do
     seen = []
 
-    announcer.subscribe Pkg::Announcement do |ann|
+    announcer.subscribe Announcement do |ann|
       seen << ann
     end
     
@@ -115,7 +88,7 @@ describe Announcements::Announcer do
     it "#unsubscribe self should unsubscribe everything I subscribed with" do
       target.should_receive(:got_announcement).exactly(0).times
       announcer.unsubscribe self
-      announcer.announce Pkg::Announcement
+      announcer.announce Announcement
     end
     
     it "#announce AnnouncementMockA should call the block" do
@@ -141,7 +114,7 @@ describe Announcements::Announcer do
     it '#announce Announcement should not call the block' do
       target.should_receive(:got_announcement).exactly(0).times
       
-      announcer.announce Pkg::Announcement
+      announcer.announce Announcement
     end
     
     it '#announce(not_a_child_of_Announcement) should raise TypeError' do
@@ -155,14 +128,14 @@ describe Announcements::Announcer do
     before :each do
       @obj = mock(:callable)
       @obj.stub!(:call)
-      announcer.subscribe Pkg::Announcement, @obj
+      announcer.subscribe Announcement, @obj
     end
     
     it "#unsubscribe the_object should remove the object" do
       @obj.should_receive(:call).exactly(0).times
 
       announcer.unsubscribe @obj
-      announcer.announce Pkg::Announcement
+      announcer.announce Announcement
     end
   end
 
@@ -179,19 +152,19 @@ describe Announcements::Announcer do
           @@method_calls
         end
       end.new
-      announcer.subscribe Pkg::Announcement, @obj => :handler
+      announcer.subscribe Announcement, @obj => :handler
     end
 
     it "#announce should send(:method, an_announcement) to an_object" do
-      announcer.announce Pkg::Announcement
+      announcer.announce Announcement
       @obj.method_calls.should have(1).item
       @obj.method_calls.first[0].should == :handler
-      @obj.method_calls.first[1].should be_instance_of(Pkg::Announcement)
+      @obj.method_calls.first[1].should be_instance_of(Announcement)
     end
 
     it "#unsubscribe an_object should do the obvious thing" do
       announcer.unsubscribe @obj
-      announcer.announce Pkg::Announcement
+      announcer.announce Announcement
       @obj.method_calls.should be_empty
     end
   end
