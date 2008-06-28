@@ -1,6 +1,6 @@
 module Announcements
   class SubscriptionRegistry
-    attr_accessor :classes_and_subscriptions, :subscriptions_class
+    attr_accessor :classes_and_subscriptions, :subscription_class
     
     def initialize
       @classes_and_subscriptions = {}
@@ -12,7 +12,7 @@ module Announcements
     end
 
     def create_subscription
-      subscription_class.for_registry self
+      self.subscription_class.for_registry self
     end
 
     def <<(subscription)
