@@ -1,4 +1,14 @@
+class Array
+  def to_announcement_classes
+    Announcements::AnnouncementSet.new(self)
+  end
+end
+
 class Object
+  def to_announcement
+    raise TypeError, "#{self.inspect} cannot be coerced into an announcement"
+  end
+  
   def announce(announcement)
     announcement = announcement.to_announcement
     unless may_announce? announcement.class
@@ -27,9 +37,7 @@ class Object
   end
 
   def subscription_registry
-    unless subscription_registry_or_nil
-      self.subscription_registry = create_subscription_registry
-    end
+    subscription_registry_or_nil || (self.subscription_registry = create_subscription_registry)
   end
   
   def subscription_registry=(registry)
@@ -46,25 +54,34 @@ class Object
     end
   end
 
-  def unsubscribe_from(object, announcement, *rest)
-    announcements = announcement.to_announcement_classes.add(rest)
+  def unsubscribe_from(object, *announcements)
+    announcements = announcements.to_announcement_classes
     if registry = subscription_registry_or_nil
       registry.delete(registry.subscriptions_of_for(object, announcements))
     end
   end
   
-  def when(announcement, &block)
-    when_for(announcement, eval('self', block), &block)
+  def when(*announcements, &block)
+    when_for(*(announcements + [eval('self', block)]), &block)
   end
 
-  def when_for(announcement, *rest, &block)
-    subscriber = rest.pop
-    klasses = announcement.to_announcement_classes + rest.collect {|each| each.to_announcement.class}
+  def make_classes(*announcements)
+    klasses = announcements.inject(Announcements::AnnouncementSet.new) do |acc, each|
+      acc + each.to_announcement_classes
+    end
     klasses.each do |each|
       unless self.may_announce? each
         bad_announcement each
       end
     end
+    return klasses
+  rescue NoMethodError
+    raise TypeError, "#{announcements.inspect} contains some invalid classes"
+  end
+
+  def when_for(announcement, *rest, &block)
+    subscriber = rest.pop
+    klasses = make_classes(announcement, *rest)
 
     registry = subscription_registry
     registry.add_subscriptions(klasses.collect do |each|
@@ -78,13 +95,7 @@ class Object
   def when_send_to(announcement, *rest)
     object = rest.pop
     selector = rest.pop
-    klasses = announcement.to_announcement_classes + rest.collect {|each| each.to_announcement.class}
-
-    klasses.each do |each|
-      unless may_announce? each
-        bad_announcement each
-      end
-    end
+    klasses = make_classes(announcement, *rest)
 
     registry = subscription_registry
     registry.add_subscriptions(klasses.collect { |each|

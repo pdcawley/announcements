@@ -16,59 +16,33 @@ describe Announcements::Announcer do
     @target ||= mock(:target)
   end
 
-  it "should allow subscription with a hash" do
-    subscriber1 = mock(:subscriber1)
-    subscriber2 = mock(:subscriber2)
-    subscriber1.should_receive(:methodA).with(duck_type(:Announcement), announcer)
-    subscriber2.should_receive(:methodB).with(duck_type(:Announcement), announcer)
-    subscriber2.should_receive(:methodA).with(duck_type(:Announcement), announcer)
-
-    announcer.subscribe(Announcement, subscriber1 => :methodA, subscriber2 => [:methodA, :methodB])
-    announcer.announce Announcement
-  end
-
   it "should allow subscription to multiple announcements" do
     target.should_receive(:got).exactly(2).times
-    announcer.subscribe(AnnouncementMockA, AnnouncementMockB) {|a| target.got(:a)}
+    announcer.when(AnnouncementMockA, AnnouncementMockB) {|a| target.got(:a)}
     announcer.announce AnnouncementMockA
     announcer.announce AnnouncementMockB
   end
 
-  describe 'subscribing with a callable object' do
-    it "should accept a lambda" do
-      target.should_receive(:got_announcement).with(duck_type(:Announcement))
-      announcer.subscribe Announcement, lambda {|a| target.got_announcement(a) }
-      announcer.announce Announcement
-    end
-
-    it "should accept an object that responds to call" do
-      callable = mock(:callable)
-      callable.should_receive(:call).with(duck_type(:Announcement), announcer)
-      announcer.subscribe Announcement, callable
-      announcer.announce Announcement
-    end
-  end
-
   describe 'when subscribing with a block' do
     it "should accept a block" do
-      announcer.subscribe AnnouncementMockA do |the_announcement|
+      announcer.when AnnouncementMockA do |the_announcement|
         # stuff
       end
     end
 
     it "should only accept an announcement class as an argument" do
-      lambda { announcer.subscribe(Object) {|| true} }.should raise_error( TypeError )
+      lambda { announcer.when(Object) {true} }.should raise_error( TypeError )
     end
 
     it "should not accept an announcement instance" do
-      lambda { announcer.subscribe(AnnouncementMockA.new) {|| true} }.should raise_error( TypeError )
+      lambda { announcer.when(AnnouncementMockA.new) {|| true} }.should raise_error( TypeError )
     end
   end
 
   it "announcing a subclass should perform any actions subscribed to a superclass" do
     seen = []
 
-    announcer.subscribe Announcement do |ann|
+    announcer.when Announcement do |ann|
       seen << ann
     end
     
@@ -80,7 +54,7 @@ describe Announcements::Announcer do
 
   describe "with a subscription to AnnouncementMockA" do
     before :each do
-      announcer.subscribe AnnouncementMockA do |the_announcement, the_announcer|
+      announcer.when AnnouncementMockA do |the_announcement, the_announcer|
         target.got_announcement(the_announcement, the_announcer)
       end
     end
@@ -124,20 +98,6 @@ describe Announcements::Announcer do
     end
   end
   
-  describe "With a callable object subscribed" do
-    before :each do
-      @obj = mock(:callable)
-      @obj.stub!(:call)
-      announcer.subscribe Announcement, @obj
-    end
-    
-    it "#unsubscribe the_object should remove the object" do
-      @obj.should_receive(:call).exactly(0).times
-
-      announcer.unsubscribe @obj
-      announcer.announce Announcement
-    end
-  end
 
   describe "when subscribing with 'subscribe Announcement, an_object => :method and announcing Announcement" do
     before :each do
@@ -152,7 +112,7 @@ describe Announcements::Announcer do
           @@method_calls
         end
       end.new
-      announcer.subscribe Announcement, @obj => :handler
+      announcer.when_send_to Announcement, :handler, @obj
     end
 
     it "#announce should send(:method, an_announcement) to an_object" do
@@ -171,30 +131,31 @@ describe Announcements::Announcer do
 
   describe "With subscriptions to AnnouncementMockA and AnnouncementMockB and announcing both" do
     before :each do
-      announcer.subscribe(AnnouncementMockA) {target.got_mock_a}
-      announcer.subscribe(AnnouncementMockB) {target.got_mock_b}
-    end
-
-    after :each do
-      announcer.announce(AnnouncementMockA)
-      announcer.announce(AnnouncementMockB)
+      announcer.when(AnnouncementMockA) {target.got_mock_a}
+      announcer.when(AnnouncementMockB) {target.got_mock_b}
     end
 
     it "should fire both subscriptions" do
       target.should_receive(:got_mock_a)
       target.should_receive(:got_mock_b)
+      announcer.announce(AnnouncementMockA)
+      announcer.announce(AnnouncementMockB)
     end
 
     it "#unsubscribe_from(AnnouncementMockA, self) should remove the AnnouncementMockA handler" do
       target.should_receive(:got_mock_a).exactly(0).times
       target.should_receive(:got_mock_b)
-      announcer.unsubscribe_from(AnnouncementMockA, self)
+      announcer.unsubscribe_from(self, AnnouncementMockA)
+      announcer.announce(AnnouncementMockA)
+      announcer.announce(AnnouncementMockB)
     end
 
     it "#unsubscribe_from(AnnouncementMockA, AnnouncementMockB) should remove both handlers" do
       target.should_receive(:got_mock_a).exactly(0).times
       target.should_receive(:got_mock_b).exactly(0).times
-      announcer.unsubscribe_from(AnnouncementMockA, AnnouncementMockB, self)
+      announcer.unsubscribe_from(self, AnnouncementMockA, AnnouncementMockB)
+      announcer.announce(AnnouncementMockA)
+      announcer.announce(AnnouncementMockB)
     end
   end
 

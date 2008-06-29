@@ -34,7 +34,7 @@ module Announcements
     end
 
     def delete(subscription)
-      if subscription.is_a? Array
+      if subscription.is_a? Enumerable
         return delete_subscriptions(subscription)
       end
       klass = subscription.announcement_class
@@ -42,7 +42,8 @@ module Announcements
       new_subs = @classes_and_subscriptions[klass].dup.delete_if {|each| each == subscription}
       subscription.deactivate
       if new_subs.empty?
-        @classes_and_subscriptions = @classes_and_subscriptions.dup.delete(klass)
+        @classes_and_subscriptions = @classes_and_subscriptions.dup
+        @classes_and_subscriptions.delete(klass)
       else
         @classes_and_subscriptions[klass] = new_subs
       end
@@ -93,7 +94,7 @@ module Announcements
       @classes_and_subscriptions.each do |(k,v)|
         if klasses.include? k
           v.each do |each|
-            result << each if each.subscriber = object
+            result << each if each.subscriber == object
           end
         end
       end

@@ -9,7 +9,7 @@ module Announcements
     end
 
     def self.to_announcement_classes
-      [self]
+      AnnouncementSet.new([self])
     end
 
     def self.<<(an_announcement_class)
