@@ -1,6 +1,97 @@
 require 'set'
 module Announcements #:nodoc:
   module Acts #:nodoc:
+    
+    # Acts::AsAnnouncer is the key module in the Announcements framework. This
+    # is where you register interest in announcements handled by the
+    # announcer. It's also the class that sends announcements. A class that
+    # makes announcements might look something like:
+    #
+    #   class Formatter
+    #     extend Acts::AsAnnouncer
+    #
+    #     def self.subscription_registry_or_nil
+    #       @@subscription_registry
+    #     end
+    #
+    #     def self.subscription_registry=(registry)
+    #       @@subscription_registry = registry
+    #     end
+    #
+    #     FormatterAnnouncement = Class.new Announcements::Announcement
+    #
+    #     class WillFormat < FormatterAnnouncement
+    #       attr_accessor :source, :formatter
+    #       def initialize(formatter, source)
+    #         @source = source
+    #       end
+    #     end
+    #
+    #     class DidFormat < FormatterAnnouncement
+    #       attr_accessor :source, :formatter
+    #       attr_reader :output
+    #
+    #       def initialize(formatter, source, output)
+    #         @source, @output = source, output
+    #         @modified = false
+    #       end
+    #
+    #       def modified?
+    #         @modified
+    #       end
+    #
+    #       def output=(modified_text)
+    #         if modified_text != output
+    #           @modified = true
+    #           @output = modified_text
+    #         end
+    #         @output
+    #       end
+    #     end
+    #
+    #     def will_format(self, source)
+    #       WillFormat.new(self, source)
+    #     end
+    #
+    #     def did_format(source,output)
+    #       DidFormat.new(source,output)
+    #     end
+    #
+    #     def render(source)
+    #       announce will_format(source)
+    #       result = really_convert(source)
+    #       notice = announce did_format(source, result)
+    #       notice.modified? ? notice.output : result
+    #     end
+    #   end
+    #
+    # Let's say that we have a post processor which post process our results in
+    # some way. We write:
+    #
+    #   Formatter.when(Formatter::DidFormat) do |notice, announcer|
+    #     if announcer.is_a? HtmlFormatter
+    #       notice.output = munge_html(notice.output)
+    #     end
+    #   end
+    #
+    # Or let's say we have an object to handle annnouncements:
+    #
+    #   Formatter.when(Formatter::DidFormat).send(:did_format, handler_object)
+    #   Formatter.when(Formatter::WillFormat).send(:will_format, handler_object)
+    #
+    # == Motivation
+    #
+    # Using Announcements can seriously slim down a class's protocol. Instead
+    # of defining a bunch of callbacks with varying signatures, it suffices to
+    # define announcement classes with appropriate attributes and behaviours,
+    # and to handle these appropriately. The announcement dispatch system
+    # doesn't care what's in an announcement, so long as it implements a couple
+    # of converting methods. The arguments that announce passes to each handler
+    # are always the announcement, the announcer, and the subscription that's
+    # handling the dispatch. Handlers can use these in whatever way they see
+    # fit and, because the announcement itself is a full blown object, can
+    # treat the announcement as a collecting parameter in order to communicate
+    # between handlers or with the announcer.
     module AsAnnouncer
       class WhenProxy #:nodoc:
         attr_accessor :announcer, :announcements
@@ -109,10 +200,11 @@ module Announcements #:nodoc:
                                      sub
                                    })
       end
-      
     end
   end
-  
+end
+module Announcements
+  # See Acts::AsAnnouncer for more details on this
   class Announcer
     include Acts::AsAnnouncer
     
