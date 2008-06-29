@@ -106,7 +106,36 @@ module Announcements #:nodoc:
           announcer.send(:when_send_for, announcements, subscriber, &block)
         end
       end
-      
+
+      # Subscribes a handler to an announcement or set of announcements. The
+      # handler can be specified in one of three ways:
+      #
+      # ===== with a block:
+      #
+      #   announcer.when(AnnouncementClass, AnotherAnnouncementClass ...) { ... }
+      #
+      # ===== with a message and target object
+      #
+      #   announcer.when(Announcement).send(:a_message, target_object)
+      #
+      # ===== with a block and a subscriber object other than +self+
+      #
+      #   announcer.when(...).for(subscriber) { ... }
+      #
+      # The subscriber object is used as the key for when unsubscribing from
+      # an announcement. In the simple block case, the subscriber is the +self+
+      # in the blocks's binding. In the +send+ case, it's the target object,
+      # and in the +for+ case, it's the subscriber object.
+      #
+      # ==== Handler Signature
+      #
+      # The handler, whether a method or a block should take between 0 and
+      # three arguments. In the three argument case, it gets called with:
+      #
+      # * +announcement+ - the announcement passed to +announce+
+      # * +announcer+ - the object making the announcement
+      # * +subscription+ - The Announcements::Subscription object that the handler
+      #   was found in
       def when(*announcements, &block)
         unless block_given?
           return WhenProxy.new(self, make_classes(announcements))
@@ -203,7 +232,7 @@ module Announcements #:nodoc:
     end
   end
 end
-module Announcements
+module Announcements #:nodoc:
   # See Acts::AsAnnouncer for more details on this
   class Announcer
     include Acts::AsAnnouncer
