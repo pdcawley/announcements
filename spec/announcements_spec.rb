@@ -112,7 +112,7 @@ describe Announcements::Announcer do
           @@method_calls
         end
       end.new
-      announcer.when_send_to Announcement, :handler, @obj
+      announcer.when( Announcement).send( :handler, @obj)
     end
 
     it "#announce should send(:method, an_announcement) to an_object" do
