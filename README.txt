@@ -95,7 +95,7 @@ Ruby just yet.
 Copyright (c) 2008 Piers Cawley
 
 This library is free software; you can redistribute it and/or modify it under
-the saem terms as Ruby itself.
+the same terms as Ruby itself.
 
 The above copyright notice and this permission notice shall be
 included in all copies or substantial portions of the Software.
