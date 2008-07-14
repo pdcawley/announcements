@@ -62,6 +62,10 @@ module Announcements
       @array
     end
 
+    def size
+      @array.size
+    end
+
     alias_method :to_ary, :to_a
 
     def +(other_collection)

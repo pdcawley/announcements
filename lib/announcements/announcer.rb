@@ -94,7 +94,7 @@ module Announcements #:nodoc:
     # between handlers or with the announcer.
     module AsAnnouncer
       class WhenProxy #:nodoc:
-        attr_accessor :announcer, :announcements
+        attr_accessor :announcer, :announcements, :subscriber
         def initialize(announcer, announcements)
           @announcer, @announcements = announcer, announcements
         end
@@ -103,7 +103,11 @@ module Announcements #:nodoc:
         end
 
         def for(subscriber, &block) #:nodoc:
-          announcer.send(:when_send_for, announcements, subscriber, &block)
+          if block_given?
+            announcer.send(:when_for, announcements, subscriber, &block)
+          else
+            self.subscriber = subscriber
+          end
         end
       end
 

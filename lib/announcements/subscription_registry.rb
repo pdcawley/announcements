@@ -61,7 +61,7 @@ module Announcements
       return result
     end
 
-    def subscriptions_for(anouncements)
+    def subscriptions_for(announcements)
       klasses = announcements.to_announcement_classes
       result = SubscriptionCollection.new
       @classes_and_subscriptions.each do |(k,v)|
